@@ -27,24 +27,37 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '20'
-        cache: 'npm'
+        # cache: 'npm' # 移除 cache，因為沒有 lock file
 
     - name: Install Dependencies
-      run: npm install # 使用 npm ci 通常更好，但在測試環境 npm install 較寬容
+      run: |
+        if [ -f "package.json" ]; then
+          npm install
+        else
+          echo "⚠️ No package.json found. Skipping install for test demo."
+        fi
 
     - name: 🏗️ Build Application
       env:
         # 注入前端需要的 VITE_ 變數
         VITE_APP_ENV: ${{ vars.APP_ENV }}
-        VITE_API_URL: ${{ vars.REGISTRY_URL }} # 範例：使用已有變數模擬 API URL
+        VITE_API_URL: ${{ vars.REGISTRY_URL }}
         DEBUG_MODE: ${{ vars.DEBUG_MODE }}
       run: |
-        echo "=== Building Vue App ==="
+        echo "=== Mocking Build Process for Vue App ==="
         echo "Environment: $VITE_APP_ENV"
+        echo "API URL: $VITE_API_URL"
         
         # 建立 .env 供 build 過程讀取 (如需要)
         echo "VITE_APP_ENV=$VITE_APP_ENV" >> .env
         echo "VITE_API_URL=$VITE_API_URL" >> .env
         
-        # 執行 Build (如果 script 存在)
-        npm run build --if-present
+        echo "=== Generated .env content ==="
+        cat .env
+        
+        # 模擬 Build
+        if [ -f "package.json" ]; then
+           npm run build --if-present
+        else
+           echo "✅ Mock build completed (No actual project)."
+        fi

@@ -24,6 +24,19 @@ BUILD_VERSION    1.0.0
 - 名稱：`production`  
   Variables：`APP_ENV=production`、`DEBUG_MODE=false`  
 
+> **⚠️ 常見問題：我看不到「選擇環境」的選單？**
+> 這是 GitHub Actions 初學者最常遇到的問題，請檢查以下兩點：
+>
+> 1.  **檔案必須在 Default Branch**：
+>     GitHub 規定 `workflow_dispatch` (手動觸發) 的設定檔 (`.yml`) **必須存在於 `main` (或 `master`) 分支上**，介面才會顯示按鈕。如果您只在 Feature Branch 開發，請先合併或推送上去。
+>
+> 2.  **正確的操作路徑 (顯示選單的關鍵)**：
+>     不要只看 Commit 的自動執行紀錄！請依照以下步驟操作：
+>     1. 點擊 GitHub Repo 上方的 **Actions** 頁籤。
+>     2. 在左側列表點擊 **Workflow 名稱** (例如 `Secrets + Vars Multi-Env Test`)。
+>     3. **這是關鍵步驟**：在右側列表上方，尋找一個淺色的 **Run workflow ▾** 按鈕。
+>     4. 點擊該按鈕，才會彈出 **Environment 下拉選單** 供您選擇。  
+
 **Environment Variables 特性**：
 - 可保護（Require approval、Required reviewers）。  
 - 優先權：Environment vars > Repository vars > env 區塊。 [stackoverflow](https://stackoverflow.com/questions/65957197/difference-between-githubs-environment-and-repository-secrets)
@@ -237,6 +250,7 @@ jobs:
 重點：
 - **前端變數轉換**：將 `APP_ENV` 等變數轉為 Vite 可讀取的 `VITE_APP_ENV` 格式。
 - **Build Time 注入**：前端 Build 過程需要這些變數 (Baked-in)。
+- **範例特別技巧**：加入 `package.json` 檢查，允許在沒有真實 Vue 專案的空 Repo 中測試流程（Mock Build）。
 
 ```yaml
 name: Vue Deploy
@@ -268,26 +282,40 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '20'
-        cache: 'npm'
+        # cache: 'npm' # 若無 lock file 需移除此行
 
     - name: Install Dependencies
-      run: npm install
+      run: |
+        if [ -f "package.json" ]; then
+          npm install
+        else
+          echo "⚠️ No package.json found. Skipping install for test demo."
+        fi
 
     - name: 🏗️ Build Application
       env:
         # 注入前端需要的 VITE_ 變數
         VITE_APP_ENV: ${{ vars.APP_ENV }}
-        VITE_API_URL: ${{ vars.REGISTRY_URL }} # 範例：使用已有變數模擬 API URL
+        VITE_API_URL: ${{ vars.REGISTRY_URL }}
+        DEBUG_MODE: ${{ vars.DEBUG_MODE }}
       run: |
-        echo "=== Building Vue App ==="
+        echo "=== Mocking Build Process for Vue App ==="
         echo "Environment: $VITE_APP_ENV"
+        echo "API URL: $VITE_API_URL"
         
         # 建立 .env 供 build 過程讀取
         echo "VITE_APP_ENV=$VITE_APP_ENV" >> .env
         echo "VITE_API_URL=$VITE_API_URL" >> .env
         
-        # 執行 Build
-        npm run build --if-present
+        echo "=== Generated .env content ==="
+        cat .env
+        
+        # 模擬 Build (若有 package.json 才執行)
+        if [ -f "package.json" ]; then
+           npm run build --if-present
+        else
+           echo "✅ Mock build completed (No actual project)."
+        fi
 ```
 
 ---
@@ -299,5 +327,23 @@ jobs:
 | **Repository Variables** | Settings → Variables | 明文 | 全 repo workflows | `APP_ENV`、`REGISTRY_URL` | `${{ vars.MY_VAR }}` |
 | **Environment Variables** | Environments → dev/staging | 明文 + 保護 | 特定 environment | `DEBUG_MODE`、`API_URL` | `${{ vars.MY_VAR }}` (需指定 `environment`) |
 | **Secrets** | Secrets and variables → Actions | 加密 + 遮蔽 | 全 repo 或 environment | `APP_KEY`、`DB_PASSWORD` | `${{ secrets.MY_SECRET }}` |
+
+***
+
+## 安全性特別說明：需要產生 `.env` 檔案嗎？
+
+在範例中我們示範了將變數寫入 `.env`，你可能會問：「這樣安全嗎？有必要嗎？」
+
+1.  **視框架需求而定**：
+    *   **Laravel**：通常依賴 `.env`，且 `php artisan config:cache` 需要它。
+    *   **Vite/Vue**：Build 工具預設會讀取 `.env` 來注入 `VITE_` 變數。
+    *   **Docker Container**：如果像本專案 `docker-compose.yml` 是用 `environment: - KEY=${KEY}` 方式，則**不需要**實體 `.env` 檔，直接傳遞系統變數即可。
+
+2.  **安全性考量**：
+    *   **Runner 是暫時的**：GitHub Actions Runner 在執行完後會被銷毀，暫存的 `.env` 也會隨之刪除，因此是安全的。
+    *   **絕對不要做的事**：
+        *   ❌ **Don't Commit**：永遠不要把生成的 `.env` 加入 git 版控。
+        *   ❌ **Don't Upload**：不要將包含 Secrets 的 `.env` 作為 Artifact 上傳（除非是用於加密的部署包）。
+        *   ❌ **Don't Cat Secrets**：生產環境中避免 `cat .env`，雖然 GitHub 會嘗試遮蔽，但這是不良習慣（範例中僅為教學驗證用）。
 
 ***
