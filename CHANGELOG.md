@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - 停用 `.github/workflows/secrets-test.yml` Workflow (已更名為 `.disabled` 以避免與 `secrets-vars-test.yml` 功能重複)。
+- 停用 `.github/workflows/laravel-ci.yml` 與 `vue-deploy.yml` (已更名為 `.disabled` 以避免測試時混淆)。
 
 ### Added
 - 新增 `docs/Repository_Environment_Variables.md` 中的「Docker Compose 變數傳遞陷阱」章節，強調在 `docker-compose.yml` 中顯式宣告變數的重要性。
