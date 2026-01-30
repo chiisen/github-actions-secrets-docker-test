@@ -8,6 +8,10 @@ services:
     environment:
       - APP_SECRET=${APP_SECRET}
       - DB_PASSWORD=${DB_PASSWORD}
+      - APP_ENV=${APP_ENV}
+      - REGISTRY_URL=${REGISTRY_URL}
+      - BUILD_VERSION=${BUILD_VERSION}
+      - DEBUG_MODE=${DEBUG_MODE}
     volumes:
       - ./test-script.sh:/test-script.sh
     command: [ "/test-script.sh" ] # 直接執行，不用 bash -c

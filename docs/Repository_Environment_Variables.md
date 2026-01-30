@@ -330,6 +330,60 @@ jobs:
 
 ***
 
+## ⚠️ 關鍵陷阱：Docker Compose 變數傳遞
+
+這是開發者最容易忽略的細節：**GitHub Actions 的變數，不會「自動」穿透到 Docker 容器內部。**
+
+一定要在 `docker-compose.yml` 做**顯式宣告 (Explicit Mapping)**。
+
+### ❌ 錯誤寫法 (以為會自動傳遞)
+Workflow 有設定 `env`，但 `docker-compose.yml` 什麼都沒寫，容器內的 `APP_ENV` 會是空的。
+
+### ✅ 正確寫法 (Explicit Mapping)
+必須在 `docker-compose.yml` 的 `environment` 區塊中，一條一條接變數接進來：
+
+```yaml
+# docker-compose.yml
+services:
+  app:
+    # ...
+    environment:
+      # 左邊是容器內的名稱，右邊是宿主機(Runner)的變數
+      - APP_SECRET=${APP_SECRET}
+      - APP_ENV=${APP_ENV}       # 漏了這行，容器就讀不到！
+      - DEBUG_MODE=${DEBUG_MODE} # 非機密變數也需要這樣接
+```
+
+### 💡 背後邏輯：變數的「過關斬將」
+想像變數要從 GitHub 傳到你的 Code，必須經過**三個關卡**，每一關都不會自動放行：
+
+1.  **第一關：GitHub → Runner (宿主機)**
+    *   **動作**：Workflow 中定義 `env: APP_ENV: ${{ vars.APP_ENV }}`。
+    *   **結果**：變數存在於 Runner (虛擬機) 的 Shell 中。
+
+2.  **第二關：Runner → Docker Compose (設定檔)**
+    *   **動作**：執行 `docker compose up`。
+    *   **結果**：Compose 讀取 YAML 檔，並解析 `${APP_ENV}` 為實際值。如果你 YAML 裡沒寫，Compose 預設**不會**把宿主機的所有變數倒進容器 (為了安全與隔離)。
+
+3.  **第三關：Docker Compose → Container (容器內部)**
+    *   **動作**：Docker 引擎啟動容器。
+    *   **結果**：只有在 `environment` 區塊宣告過的變數，才會出現在容器內的 `/proc/1/environ` 中，讓你的程式碼 (PHP/Node/Python) 讀取到。
+
+### 🔥 進階技巧：Pass-through (透傳寫法)
+覺得 `${APP_ENV}` 寫起來太冗長？Docker Compose 支援更簡潔的**透傳寫法**：
+
+```yaml
+services:
+  app:
+    environment:
+      - APP_SECRET   # ✅ 自動抓取宿主機同名變數
+      - APP_ENV      # ✅ 等同於 APP_ENV=${APP_ENV}
+      - DEBUG_MODE   # ✅ 簡潔有力！
+```
+只要確保 Workflow 的 `env` 變數名稱與容器內變數名稱**完全一致**，就可以這樣寫。
+
+***
+
 ## 安全性特別說明：需要產生 `.env` 檔案嗎？
 
 在範例中我們示範了將變數寫入 `.env`，你可能會問：「這樣安全嗎？有必要嗎？」
