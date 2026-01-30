@@ -1,0 +1,50 @@
+name: Vue Deploy
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: '選擇環境'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+        - dev
+        - staging
+        - production
+
+jobs:
+  vue-build:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'dev' }}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install Dependencies
+      run: npm install # 使用 npm ci 通常更好，但在測試環境 npm install 較寬容
+
+    - name: 🏗️ Build Application
+      env:
+        # 注入前端需要的 VITE_ 變數
+        VITE_APP_ENV: ${{ vars.APP_ENV }}
+        VITE_API_URL: ${{ vars.REGISTRY_URL }} # 範例：使用已有變數模擬 API URL
+        DEBUG_MODE: ${{ vars.DEBUG_MODE }}
+      run: |
+        echo "=== Building Vue App ==="
+        echo "Environment: $VITE_APP_ENV"
+        
+        # 建立 .env 供 build 過程讀取 (如需要)
+        echo "VITE_APP_ENV=$VITE_APP_ENV" >> .env
+        echo "VITE_API_URL=$VITE_API_URL" >> .env
+        
+        # 執行 Build (如果 script 存在)
+        npm run build --if-present

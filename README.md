@@ -163,3 +163,21 @@ services:
 ```
 用 `envsubst` 替換 `.env.template`，完全符合你 PowerShell / Bash 習慣。 [stackoverflow](https://stackoverflow.com/questions/60176044/how-do-i-use-an-env-file-with-github-actions)
 
+
+***
+
+## 進階閱讀 (Documentation)
+
+專案包含兩份詳細的技術文件，解決常見問題與進階應用：
+
+### 1. [Permission Denied 權限問題詳解](docs/PermissionDenied.md)
+**遇到 `bash: /test-script.sh: Permission denied` 錯誤怎麼辦？**
+- **原因**：GitHub Actions Runner 與 Docker 容器間的檔案權限 (`chmod +x`) 和 User ID 不匹配。
+- **解法**：文件中詳細說明了如何在 Workflow 中修復權限，以及 `docker-compose.yml` 的 `user: "0:0"` 設定技巧。
+
+### 2. [Repository & Environment Variables 進階應用](docs/Repository_Environment_Variables.md)
+**如何管理多環境（Dev / Staging / Prod）變數？**
+- **區分 Secrets 與 Vars**：何時用加密 Secrets，何時用明文 Repository Variables。
+- **多環境實戰**：包含完整的 **Laravel CI** 與 **Vue Deploy** 範例，教你如何用 `workflow_dispatch` 的 inputs 選單來切換環境變數。
+
+***

@@ -1,16 +1,15 @@
 #!/bin/bash
-
-echo "=== GitHub Actions Secrets 測試 ==="
-echo "APP_SECRET: ${APP_SECRET:-'未設定'}"
-echo "長度: ${#APP_SECRET}"
-echo "前 5 字: ${APP_SECRET:0:5}"
-echo "DB_PASSWORD: ${DB_PASSWORD:-'未設定'}"
-echo "長度: ${#DB_PASSWORD}"
-
+echo "=== Secrets 測試 ==="
 if [ -n "$APP_SECRET" ] && [ -n "$DB_PASSWORD" ]; then
   echo "✅ Secrets 傳遞成功！"
 else
   echo "❌ Secrets 遺失！"
 fi
+
+echo "=== Repository / Environment Variables 測試 ==="
+echo "APP_ENV: ${APP_ENV:-未設定}"
+echo "REGISTRY_URL: ${REGISTRY_URL:-未設定}"
+echo "BUILD_VERSION: ${BUILD_VERSION:-未設定}"
+echo "DEBUG_MODE: ${DEBUG_MODE:-未設定}"
 
 echo "=== 結束 ==="

@@ -1,0 +1,62 @@
+name: Laravel CI
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: '選擇環境'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+        - dev
+        - staging
+        - production
+
+jobs:
+  laravel-tests:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'dev' }}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.4'
+        extensions: mbstring, xml, bcmath
+
+    - name: 🔐 Inject Environment Variables
+      env:
+        APP_ENV: ${{ vars.APP_ENV }}
+        APP_DEBUG: ${{ vars.DEBUG_MODE }}
+        APP_KEY: ${{ secrets.APP_KEY }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      run: |
+        echo "=== Generating .env for Laravel ==="
+        echo "APP_ENV=$APP_ENV" >> .env
+        echo "APP_DEBUG=$APP_DEBUG" >> .env
+        echo "APP_KEY=$APP_KEY" >> .env
+        echo "DB_PASSWORD=$DB_PASSWORD" >> .env
+        
+        # 簡單驗證
+        echo "Created .env with APP_ENV=$APP_ENV"
+
+    - name: Install Dependencies
+      run: |
+         if [ -f "composer.json" ]; then
+            composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+         else
+            echo "No composer.json found, skipping install."
+         fi
+
+    - name: Execute Tests
+      run: |
+         if [ -f "vendor/bin/phpunit" ]; then
+            vendor/bin/phpunit
+         else
+            echo "No PHPUnit found, skipping tests."
+         fi
