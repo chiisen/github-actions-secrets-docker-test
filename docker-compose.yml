@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  test-app:
+    image: ubuntu:22.04 # 簡單 ubuntu 容器，模擬你的 app
+    container_name: secrets-test
+    environment:
+      - APP_SECRET=${APP_SECRET} # 從 host env 注入
+      - DB_PASSWORD=${DB_PASSWORD} # 多 secrets 測試
+    volumes:
+      - ./test-script.sh:/test-script.sh # mount shell script
+    command: [ "/bin/bash", "/test-script.sh" ]
+    stdin_open: true
+    tty: true
