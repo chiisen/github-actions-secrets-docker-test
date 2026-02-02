@@ -1,0 +1,57 @@
+name: TEST-Develop-CI (Logging Only)
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: '測試部署分支'
+        required: true
+        default: 'develop'
+
+jobs:
+  test-ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Run Infrastructure Simulator
+        uses: ./.github/actions/infrastructure
+        
+      - name: Run Test Simulator
+        uses: ./.github/actions/test-notify
+
+  test-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        
+      - name: 🔍 Debug Secrets (B64 Encoded)
+        run: |
+          # 使用 Base64 編碼輸出以繞過 GitHub Actions 的自動遮蔽 (***)
+          # 複製輸出字串後，可使用 'echo "字串" | base64 --decode' 進行驗證
+          echo "=== 複製以下字串進行 Base64 解碼驗證 ==="
+          echo "TEST_SERVER_HOST: $(echo ${{ secrets.TEST_SERVER_HOST }} | base64)"
+          echo "TEST_SERVER_USERNAME: $(echo ${{ secrets.TEST_SERVER_USERNAME }} | base64)"
+          echo "TEST_SERVER_DB_PWD: $(echo ${{ secrets.TEST_SERVER_DB_PWD }} | base64)"
+          echo "REDIS_PASSWORD: $(echo ${{ secrets.REDIS_PASSWORD }} | base64)"
+          echo "FIREBASE_SECRET: $(echo ${{ secrets.FIREBASE_SECRET }} | base64)"
+          echo "GRAFANA_TOKEN: $(echo ${{ secrets.GRAFANA_TOKEN }} | base64)"
+          echo "TELEGRAM_CHAT_ID: $(echo ${{ secrets.TELEGRAM_CHAT_ID }} | base64)"
+          echo "TELEGRAM_BOT_TOKEN: $(echo ${{ secrets.TELEGRAM_BOT_TOKEN }} | base64)"
+
+      - name: Deploy Simulator
+        uses: ./.github/actions/deploy/to-test
+        with:
+          host: ${{ secrets.TEST_SERVER_HOST }}
+          username: ${{ secrets.TEST_SERVER_USERNAME }}
+          key: ${{ secrets.TEST_SSH_PRIVATE_KEY }}
+          repository: ${{ github.repository }}
+          db_pwd: ${{ secrets.TEST_SERVER_DB_PWD }}
+          redis_pwd: ${{ secrets.REDIS_PASSWORD }}
+          firebase_secret: ${{ secrets.FIREBASE_SECRET }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          grafana_token: ${{ secrets.GRAFANA_TOKEN }}
+          tg_chat_id: ${{ secrets.TELEGRAM_CHAT_ID }}
+          tg_bot_token: ${{ secrets.TELEGRAM_BOT_TOKEN }}

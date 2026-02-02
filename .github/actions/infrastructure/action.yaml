@@ -1,0 +1,13 @@
+name: "Infrastructure Setup (Test Only)"
+description: "Simulator for environment setup"
+runs:
+  using: "composite"
+  steps:
+    - name: Simulate infrastructure check
+      run: |
+        echo "LOG: [Infrastructure] 進入基礎設施設定步驟"
+        echo "LOG: [Infrastructure] 模擬偵測 PHP 檔案變更..."
+        echo "LOG: [Infrastructure] 模擬安裝 PHP 8.4 相關套件"
+        echo "LOG: [Infrastructure] 模擬執行 composer install"
+        echo "LOG: [Infrastructure] 模擬產生 Laravel APP_KEY"
+      shell: bash

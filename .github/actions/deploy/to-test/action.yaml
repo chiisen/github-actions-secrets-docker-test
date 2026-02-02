@@ -1,0 +1,62 @@
+name: 'Deploy To Test (Test Only)'
+description: 'Simulator for deployment with secrets verification'
+
+inputs:
+  host:
+    description: '測試環境主機位址'
+    required: true
+  username:
+    description: 'SSH 使用者名稱'
+    required: true
+  key:
+    description: 'SSH 私鑰'
+    required: true
+  repository:
+    description: 'GitHub repo 名稱'
+    required: true
+  db_pwd:
+    description: '資料庫密碼'
+    required: true
+  redis_pwd:
+    description: 'Redis 密碼'
+    required: false
+  firebase_secret:
+    description: 'Firebase 密鑰'
+    required: false
+  github_token:
+    description: 'GitHub Token'
+    required: true
+  grafana_token:
+    description: 'Grafana Token'
+    required: false
+  tg_chat_id:
+    description: 'Telegram Chat ID'
+    required: false
+  tg_bot_token:
+    description: 'Telegram Bot Token'
+    required: false
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Simulate Deployment and Log Secrets Status
+      run: |
+        echo "LOG: [Deploy] 開始模擬部署流程"
+        echo "LOG: [Deploy] 目標主機: ${{ inputs.host }}"
+        echo "LOG: [Deploy] 執行帳號: ${{ inputs.username }}"
+        
+        echo "--- Secrets 接收狀態檢查 ---"
+        if [ -n "${{ inputs.key }}" ]; then echo "✅ SSH Key 已接收 (Hidden)"; else echo "❌ SSH Key 未設定"; fi
+        if [ -n "${{ inputs.db_pwd }}" ]; then echo "✅ DB Password 已接收 (Hidden)"; else echo "❌ DB Password 未設定"; fi
+        if [ -n "${{ inputs.redis_pwd }}" ]; then echo "✅ Redis Password 已接收 (Hidden)"; else echo "❌ Redis Password 未設定"; fi
+        if [ -n "${{ inputs.firebase_secret }}" ]; then echo "✅ Firebase Secret 已接收 (Hidden)"; else echo "❌ Firebase Secret 未設定"; fi
+        if [ -n "${{ inputs.github_token }}" ]; then echo "✅ GitHub Token 已接收 (Hidden)"; else echo "❌ GitHub Token 未設定"; fi
+        if [ -n "${{ inputs.grafana_token }}" ]; then echo "✅ Grafana Token 已接收 (Hidden)"; else echo "❌ Grafana Token 未設定"; fi
+        if [ -n "${{ inputs.tg_chat_id }}" ]; then echo "✅ Telegram Chat ID 已接收 (Hidden)"; else echo "❌ Telegram Chat ID 未設定"; fi
+        if [ -n "${{ inputs.tg_bot_token }}" ]; then echo "✅ Telegram Bot Token 已接收 (Hidden)"; else echo "❌ Telegram Bot Token 未設定"; fi
+        
+        echo "LOG: [Deploy] 正在模擬 SSH 連線到遠端伺服器..."
+        echo "LOG: [Deploy] 正在執行 git pull 分支..."
+        echo "LOG: [Deploy] 正在啟動 Docker Compose..."
+        echo "LOG: [Deploy] 部署模擬完成。"
+      shell: bash

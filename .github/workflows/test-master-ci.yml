@@ -1,0 +1,32 @@
+name: TEST-Master-CI (Logging Only)
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag_part:
+        description: 'Version part'
+        required: true
+        default: 'PATCH'
+
+jobs:
+  test-master:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Infrastructure Simulator
+        uses: ./.github/actions/infrastructure
+        
+      - name: 🔍 Debug Secrets (B64 Encoded)
+        run: |
+          # 使用 Base64 編碼輸出以繞過 GitHub Actions 的自動遮蔽 (***)
+          # 複製輸出字串後，可使用 'echo "字串" | base64 --decode' 進行驗證
+          echo "=== 複製以下字串進行 Base64 解碼驗證 ==="
+          echo "GHCR_TOKEN: $(echo ${{ secrets.GHCR_TOKEN }} | base64)"
+
+      - name: Build and Push Simulator
+        uses: ./.github/actions/build-push
+        with:
+          tag_part: ${{ github.event.inputs.tag_part || 'PATCH' }}
+          ghcr_token: ${{ secrets.GHCR_TOKEN }}

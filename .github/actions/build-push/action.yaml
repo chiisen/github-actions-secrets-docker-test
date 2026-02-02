@@ -1,0 +1,29 @@
+name: "Build and Push (Test Only)"
+description: "Simulator for Docker build and push"
+inputs:
+  tag_part:
+    description: 'Version part'
+    required: true
+  ghcr_token:
+    description: 'GHCR Token'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Simulate Build and Push
+      run: |
+        echo "LOG: [Build] 進入 Docker 建置步驟"
+        echo "LOG: [Build] 版本更動類型: ${{ inputs.tag_part }}"
+        
+        if [ -n "${{ inputs.ghcr_token }}" ]; then 
+          echo "✅ GHCR Token 已接收 (Hidden)"
+        else 
+          echo "❌ GHCR Token 未設定"
+        fi
+        
+        echo "LOG: [Build] 正在模擬 Docker login ghcr.io..."
+        echo "LOG: [Build] 正在模擬 docker buildx build..."
+        echo "LOG: [Build] 模擬推送影像：ghcr.io/mfs_jy/app-server:test-tag"
+        echo "LOG: [Build] 建置與推送模擬完成。"
+      shell: bash

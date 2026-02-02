@@ -1,0 +1,15 @@
+name: "Test and Notify (Test Only)"
+description: "Simulator for running tests and notifications"
+runs:
+  using: "composite"
+  steps:
+    - name: Simulate testing
+      run: |
+        echo "LOG: [Test] 進入單元測試步驟"
+        echo "LOG: [Test] 模擬執行 vendor/bin/pest..."
+        echo "LOG: [Test] 測試結果：PASS (模擬)"
+      shell: bash
+    - name: Simulate notification
+      run: |
+        echo "LOG: [Notify] 模擬 Telegram 通知發送成功"
+      shell: bash
